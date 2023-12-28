@@ -39,7 +39,7 @@ void *handleRegistration(void *arg, int client_socket){
     char* message;  
 
     // Ghép mã giao thức
-    sprintf(message, "200/n");
+    sprintf(message, "register/n");
 
     // Ghép thông tin người dùng
     sprintf(message + strlen(message), "%s/n%s/n%s/r/n", newUser.fullname, newUser.username, newUser.password);

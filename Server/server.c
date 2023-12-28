@@ -22,6 +22,7 @@ pthread_t threads[MAX_CLIENTS];  // Mảng lưu trữ các thread
 void handle_client(int client_socket) {
     char buffer[1024];
     int bytes_received;
+    char *partial_data = NULL;
 
     while (1) {
         // Đọc dữ liệu từ client
@@ -32,12 +33,38 @@ void handle_client(int client_socket) {
             return;
         }
 
-        // Xử lý dữ liệu (ở đây là in ra màn hình)
-        buffer[bytes_received] = '\0';
-        printf("Received from client: %s", buffer);
+        // Append received data to the existing partial_data
+        partial_data = realloc(partial_data, partial_data_length + bytes_received);
+        if (partial_data == NULL) {
+            // Handle memory allocation error
+            break;
+        }
+        memcpy(partial_data + partial_data_length, buffer, bytes_received);
+        partial_data_length += bytes_received;
 
-        // Gửi phản hồi cho client
-        send(client_socket, "Server received your message.\n", 30, 0);
+        char *crlf_position;
+        // Process the data until a "\r\n" is found
+        while ((crlf_position = strstr(partial_data, "\r\n")) != NULL) {
+            *crlf_position = '\0'; // Null-terminate the line
+
+        // Process the complete line
+
+        // Create a buffer to store the complete data
+        int buffer_full_size = partial_data_length;
+        char *buffer_full = (char *)malloc(buffer_full_size);
+        if (buffer_full == NULL) {
+            perror("malloc");
+            // Handle memory allocation error
+        }
+        strcpy(buffer_full, partial_data);
+
+        //Handle
+
+        // Move the remaining data to the beginning of the buffer
+        int remaining_length = partial_data_length - (crlf_position - partial_data) - 2;
+        memmove(partial_data, crlf_position + 2, remaining_length);
+        partial_data_length = remaining_length;
+        }
     }
 }
 

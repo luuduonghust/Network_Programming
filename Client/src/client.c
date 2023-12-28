@@ -49,7 +49,7 @@ int main() {
     char username[50];
     char password[50];
 
-    client_socket = 
+    // client_socket = 
 
     do {
         printf("\nChon chuc nang:\n");
