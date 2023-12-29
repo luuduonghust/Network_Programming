@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "../lib/session_manager.h"
+#include "../lib/sessionManager.h"
 
 // Structure to store account information
 typedef struct {
