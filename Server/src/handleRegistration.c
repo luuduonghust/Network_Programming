@@ -4,15 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-// Định nghĩa cấu trúc UserInfo
-struct UserInfo {
-    char fullname[256];
-    char username[256];
-    char password[256];
-    int gen_id;
-};
 // Lưu thông tin người dùng
-int save(char* fullname, char* username, char* passsword, int *gen_id);
+char save(char* fullname, char* username, char* passsword);
 // Kiểm tra người dùng có tồn tại hay không
 int check(struct UserInfo user);
 // Lưu giá trị gen_id vào tệp
@@ -24,7 +17,7 @@ void handleRegistration(char *message, int *gen_id, int socket_fd){
     char* username;
     char* password;
     // Phân tích thông điệp
-    if (sscanf(message, "%s/n%s/n%s/r/n", fullname, username, password) == 3)
+    if (sscanf(message, "%s/n%s/n%s/r/n", , fullname, username, password) == 3)
     {
         // Đọc giá trị gen_id từ tệp khi khởi động chương trình
         *gen_id = readGenId();
@@ -45,7 +38,7 @@ void handleRegistration(char *message, int *gen_id, int socket_fd){
        }else
        {
         // Gửi mã 401 nếu không thành công
-        send(socket_fd, "401", sizeof("401"), 0 );
+        send(socket_fd, "401", sizeof("401"), 0 )
        }
     }
     

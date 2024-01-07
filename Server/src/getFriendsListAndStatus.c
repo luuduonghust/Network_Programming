@@ -1,72 +1,66 @@
-//Server return message: "Protocol code\n Total Friend \n ID1 Status1 \n ID2 Status2 \n ID3 Status3 \n ID4 Status4 \n ID5 Status5 \n ..."
+// Include necessary headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../lib/sessionManager.h"
+#include "../lib/limit_local.h"
 
-#define MAX_FRIENDS 100
-#define MAX_LINE_LENGTH 256
+// Define the maximum length of a line
+#define MAX_LINE_LENGTH 12
 
-void loadFriendData(char *filename, char *userId, char friends[MAX_FRIENDS][50], int *totalFriends) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+// Function to get the friend list and status
+void getFriendListAndStatus(char *user_id, int socket_fd, const struct Session *sessionList)
+{
+    // Open the friend file for reading
+    FILE *friendFile = fopen("friend.txt", "r");
+    if (!friendFile)
+    {
+        perror("Error opening friend.txt");
+        return;
     }
-
-    *totalFriends = 0;
 
     char line[MAX_LINE_LENGTH];
-    while (fgets(line, sizeof(line), file) != NULL) {
-        char *friendId = strtok(line, " ");
-        char *userIdInFile = strtok(NULL, " \n");
+    // Initialize the response with the size of "Protocol code" and one newline character
+    char *response = malloc(sizeof("308\n") + 1);
+    strcpy(response, "308\n");
 
-        if (strcmp(userId, userIdInFile) == 0) {
-            // User_id matches, add friend to the list
-            strcpy(friends[*totalFriends], friendId);
-            (*totalFriends)++;
-        } else if (strcmp(userId, friendId) == 0) {
-            // User_id found in friend's column, add friend to the list
-            strcpy(friends[*totalFriends], userIdInFile);
-            (*totalFriends)++;
+    int totalFriends = 0;
+
+    // Iterate through the friend.txt file
+    while (fgets(line, sizeof(line), friendFile) != NULL)
+    {
+        char *friend1 = strtok(line, " \n");
+        char *friend2 = strtok(NULL, " \n");
+
+        // Check if user_id is a friend of friend1 or friend2
+        if (strcmp(user_id, friend1) == 0)
+        {
+            int status = findSocketIdByUserId(sessionList, friend2) != -1 ? 1 : 0;
+            // Perform realloc to add new data
+            response = realloc(response, strlen(response) + MAX_ID_LENGTH + 3);
+            sprintf(response + strlen(response), "%s %d\n", friend2, status);
+            totalFriends++;
+        }
+        else if (strcmp(user_id, friend2) == 0)
+        {
+            int status = findSocketIdByUserId(sessionList, friend1) != -1 ? 1 : 0;
+            // Perform realloc to add new data
+            response = realloc(response, strlen(response) + MAX_ID_LENGTH + 3);
+            sprintf(response + strlen(response), "%s %d\n", friend1, status);
+            totalFriends++;
         }
     }
 
-    fclose(file);
-}
+    fclose(friendFile);
 
-int findSocketIdByUserId(const struct Session *sessionList, const char *userId, int totalSessions) {
-    for (int i = 0; i < totalSessions; i++) {
-        if (strcmp(sessionList[i].userId, userId) == 0) {
-            return sessionList[i].socketId;
-        }
-    }
-    return -1;
-}
+    // Add the total number of friends to the response
+    // Perform realloc to add new data
+    response = realloc(response, strlen(response) + MAX_LINE_LENGTH);
+    sprintf(response + strlen(response), "%d\n", totalFriends);
 
-void getFriendListAndStatus(char *user_id, int socket_fd) {
-    // Load friend data from file
-    char friends[MAX_FRIENDS][50];
-    int totalFriends;
-    loadFriendData("friend.txt", user_id, friends, &totalFriends);
-
-    // Simulate session list (replace with your actual session list)
-    struct Session sessionList[] = {
-        {"ID1", 101},
-        {"ID2", 102},
-        {"ID3", 103},
-        // Add more sessions as needed
-    };
-    int totalSessions = sizeof(sessionList) / sizeof(sessionList[0]);
-
-    // Prepare the response message
-    char response[1024];
-    sprintf(response, "Protocol code\nTotal Friend\n");
-    for (int i = 0; i < totalFriends; i++) {
-        int status = findSocketIdByUserId(sessionList, friends[i], totalSessions) != -1 ? 1 : 0;
-        sprintf(response + strlen(response), "%s %d\n", friends[i], status);
-    }
-
-    // Send the response to the client
+    // Send the response back to the client
     send(socket_fd, response, strlen(response), 0);
+
+    // Free the allocated memory after use
+    free(response);
 }

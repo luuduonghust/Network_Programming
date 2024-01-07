@@ -57,8 +57,7 @@ void handle_client(int client_socket) {
             // Handle memory allocation error
         }
         strcpy(buffer_full, partial_data);
-
-        //Handle
+        
 
         // Move the remaining data to the beginning of the buffer
         int remaining_length = partial_data_length - (crlf_position - partial_data) - 2;

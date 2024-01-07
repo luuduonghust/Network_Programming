@@ -1,4 +1,4 @@
-#ifndef CONNECTTOSERVER_H
-#define CONNECTTOSERVER_H
-int connectToServer(char* server_add, int port);
+#ifndef HANDLELOGIN_H
+#define HANDLELOGIN_H
+void handleLogin(char *message, int socket_fd, const struct Session *sessionList);
 #endif
