@@ -9,7 +9,7 @@
 void processRemoveFriend(char *message, int socket_fd) {
     char userId1[256];
     char userId2[256];
-        if (sscanf(message, "/n%s/n%s/n/r",  userId1, userId2) == 2) {
+        if (sscanf(message, "\n%s\n%s\n\r",  userId1, userId2) == 2) {
           
                  FILE *file = fopen("friend.txt", "r");
                 if (file == NULL) {
@@ -27,7 +27,11 @@ void processRemoveFriend(char *message, int socket_fd) {
                 }
                   fclose(file);
              if (found) {
-                send(socket_fd, "315",sizeof("315"), 0);
+                //Huỷ kết bạn thành công
+                send(socket_fd, "2009",sizeof("2009"), 0);
+             }else{
+                // Không tìm thấy ID, gửi response 4009
+                send(socket_fd, "4009", sizeof("4009"), 0);
              }
             
         }

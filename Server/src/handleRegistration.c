@@ -23,7 +23,7 @@ void handleRegistration(char *message, int *gen_id, int socket_fd){
     char* username;
     char* password;
     // Phân tích thông điệp
-    if (sscanf(message, "%s/n%s/n%s/r/n", fullname, username, password) == 3)
+    if (sscanf(message, "%s\n%s\n%s\r\n", fullname, username, password) == 3)
     {
         // Đọc giá trị gen_id từ tệp khi khởi động chương trình
         *gen_id = readGenId();
@@ -39,12 +39,12 @@ void handleRegistration(char *message, int *gen_id, int socket_fd){
         if (check(newUser))
         {
              // Gửi mã phản hồi 201 nếu thành công
-            send(socket_fd, "201", sizeof("201"), 0);
+            send(socket_fd, "2001", sizeof("2001"), 0);
         }
        }else
        {
         // Gửi mã 401 nếu không thành công
-        send(socket_fd, "401", sizeof("401"), 0 );
+        send(socket_fd, "4001", sizeof("4001"), 0 );
        }
     }
     
