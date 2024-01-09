@@ -6,7 +6,7 @@
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12345
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 void displayMenu01()
 {
@@ -33,38 +33,55 @@ void displayMenu02()
     printf("Nhập lựa chọn của bạn: ");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    int clientSocket;
-    struct sockaddr_in serverAddr;
-    char buffer[BUFFER_SIZE];
+    if (argc != 3)
+    {
+        fprintf(stderr, "Usage: %s <IP_Addr> <Port_Number>\n", argv[0]);
+        return 1;
+    }
 
-    // Tạo socket
+    int clientSocket;
+    struct sockaddr_in server;
+    char buffer[BUFFER_SIZE];
+    int bytes_received;
+
+    // Create a socket
     if ((clientSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        perror("Error creating socket");
-        exit(EXIT_FAILURE);
+        perror("socket");
+        exit(1);
     }
 
-    // Cấu hình địa chỉ server
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    serverAddr.sin_port = htons(SERVER_PORT);
+    // Initialize server address structure
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(atoi(argv[2]));
+    server.sin_addr.s_addr = inet_addr(argv[1]); // IP address of the server
 
-    // Kết nối đến server
-    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+    // Connect to the server
+    if (connect(clientSocket, (struct sockaddr *)&server, sizeof(server)) == -1)
     {
-        perror("Error connecting to server");
-        exit(EXIT_FAILURE);
+        perror("connect");
+        exit(1);
     }
 
+    // Receive initial server response
+    bytes_received = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+    if (strstr(buffer, "2000") == buffer)
+    {
+        printf("Connect server!\n");
+    }
+    int login = 0;
     int choice;
     do
     {
-        displayMenu();
+        displayMenu01();
         scanf("%d", &choice);
-
+        // Đọc và loại bỏ ký tự mới dòng từ bộ đệm
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+            ;
         // Khi người dùng chưa đăng nhập
         switch (choice)
         {
@@ -77,7 +94,7 @@ int main()
         }
         case 2:
         {
-            // Xử lý đăng nhập
+            login = loginFunction(clientSocket);
             // ...
             break;
         }

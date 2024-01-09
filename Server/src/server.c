@@ -2,133 +2,99 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <pthread.h>
+#include "../lib/sessionManager.h"
+#include "../lib/handle_client.h"
 
-#define PORT 8080
-#define MAX_CLIENTS 10
+#define BACKLOG 20
 
-// Struct để lưu trữ thông tin của mỗi client
-typedef struct {
-    int socket;
-    struct sockaddr_in address;
-    int addr_len;
-} Client;
+// Global session list
+struct Session *sessionList = NULL;
 
-Client clients[MAX_CLIENTS];  // Mảng lưu trữ thông tin của các client
-pthread_t threads[MAX_CLIENTS];  // Mảng lưu trữ các thread
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s <Port_Number>\n", argv[0]);
+        return 1;
+    }
 
-// Hàm xử lý các yêu cầu từ client
-void handle_client(int client_socket) {
-    char buffer[1024];
-    int bytes_received;
-    char *partial_data = NULL;
+    int listen_fd, conn_fd;
+    struct sockaddr_in server, client;
+    socklen_t client_len;
 
-    while (1) {
-        // Đọc dữ liệu từ client
-        bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
-        if (bytes_received <= 0) {
-            // Client đã đóng kết nối hoặc có lỗi
-            close(client_socket);
-            return;
+    // Create a socket
+    if ((listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        perror("socket");
+        exit(1);
+    }
+
+    // Initialize server structure
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(atoi(argv[1]));
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // Bind the socket to the server address
+    if (bind(listen_fd, (struct sockaddr *)&server, sizeof(server)) == -1)
+    {
+        perror("bind");
+        exit(1);
+    }
+
+    // Start listening for incoming connections
+    if (listen(listen_fd, BACKLOG) == -1)
+    {
+        perror("listen");
+        exit(1);
+    }
+
+    // Open the account file for reading
+    FILE *file = fopen("../database/account.txt", "r+");
+    if (file == NULL)
+    {
+        perror("Cannot open file");
+        return 0; // Error opening file
+    }
+
+    pthread_t tid;
+
+    while (1)
+    {
+        client_len = sizeof(client);
+
+        // Accept incoming connection
+        if ((conn_fd = accept(listen_fd, (struct sockaddr *)&client, &client_len)) == -1)
+        {
+            perror("accept");
+            continue;
         }
 
-        // Append received data to the existing partial_data
-        partial_data = realloc(partial_data, partial_data_length + bytes_received);
-        if (partial_data == NULL) {
-            // Handle memory allocation error
-            break;
-        }
-        memcpy(partial_data + partial_data_length, buffer, bytes_received);
-        partial_data_length += bytes_received;
+        struct ThreadArgs *args = malloc(sizeof(struct ThreadArgs));
+        args->conn_fd = conn_fd;
+        args->file = file;
+        args->client_sock_addr = client;
+        args->sessionList = &sessionList;
 
-        char *crlf_position;
-        // Process the data until a "\r\n" is found
-        while ((crlf_position = strstr(partial_data, "\r\n")) != NULL) {
-            *crlf_position = '\0'; // Null-terminate the line
-
-        // Process the complete line
-
-        // Create a buffer to store the complete data
-        int buffer_full_size = partial_data_length;
-        char *buffer_full = (char *)malloc(buffer_full_size);
-        if (buffer_full == NULL) {
-            perror("malloc");
-            // Handle memory allocation error
-        }
-        strcpy(buffer_full, partial_data);
-        
-
-        // Move the remaining data to the beginning of the buffer
-        int remaining_length = partial_data_length - (crlf_position - partial_data) - 2;
-        memmove(partial_data, crlf_position + 2, remaining_length);
-        partial_data_length = remaining_length;
-        }
-    }
-}
-
-// Hàm xử lý từng client trong một thread riêng biệt
-void *client_handler(void *arg) {
-    int client_index = *((int *)arg);
-    handle_client(clients[client_index].socket);
-
-    return NULL;
-}
-
-int main() {
-    int server_socket, client_socket, addr_len;
-    struct sockaddr_in server_addr, client_addr;
-
-    // Khởi tạo server socket
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_socket == -1) {
-        perror("Error creating socket");
-        exit(EXIT_FAILURE);
+        pthread_create(&tid, NULL, &handleClient, (void *)args);
+        // Detach the thread to automatically clean up resources
+        pthread_detach(tid);
     }
 
-    // Cấu hình địa chỉ và cổng của server
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(PORT);
-
-    // Bind server socket đến địa chỉ và cổng
-    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-        perror("Error binding socket");
-        close(server_socket);
-        exit(EXIT_FAILURE);
+    // Free memory when the program ends
+    struct Session *currentSession = sessionList;
+    while (currentSession != NULL)
+    {
+        struct Session *nextSession = currentSession->next;
+        free(currentSession->userId);
+        free(currentSession);
+        currentSession = nextSession;
     }
 
-    // Lắng nghe kết nối từ client
-    if (listen(server_socket, MAX_CLIENTS) == -1) {
-        perror("Error listening for connections");
-        close(server_socket);
-        exit(EXIT_FAILURE);
-    }
-
-    printf("Server listening on port %d...\n", PORT);
-
-    // Chấp nhận kết nối từ client và xử lý trong thread riêng biệt
-    int client_index;
-    for (client_index = 0; client_index < MAX_CLIENTS; ++client_index) {
-        addr_len = sizeof(client_addr);
-        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
-
-        // Lưu thông tin của client vào mảng clients
-        clients[client_index].socket = client_socket;
-        clients[client_index].address = client_addr;
-        clients[client_index].addr_len = addr_len;
-
-        // Tạo thread để xử lý client
-        pthread_create(&threads[client_index], NULL, client_handler, &client_index);
-    }
-
-    // Chờ các thread kết thúc (hiện tại là vô hạn, bạn có thể thêm điều kiện dừng)
-    for (client_index = 0; client_index < MAX_CLIENTS; ++client_index) {
-        pthread_join(threads[client_index], NULL);
-    }
-
-    // Đóng server socket
-    close(server_socket);
-
+    fclose(file);
+    close(listen_fd);
     return 0;
 }

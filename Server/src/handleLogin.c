@@ -5,150 +5,83 @@
 #include <netinet/in.h>
 #include "../lib/sessionManager.h"
 
-// Structure to store account information
-typedef struct
-{
-    char *fullname;
-    char *username;
-    char *password;
-    char *ID;
-    int active; // 1: active, 0: inactive
-} Account;
-
-// Function to check if a username and password are valid and active
-int isValidAccount(char *inputUsername, char *inputPassword, Account *accounts, int numAccounts)
-{
-    for (int i = 0; i < numAccounts; i++)
-    {
-        if (strcmp(inputUsername, accounts[i].username) == 0 &&
-            strcmp(inputPassword, accounts[i].password) == 0 &&
-            accounts[i].active == 1)
-        {
-            return 1; // Valid and active account
-        }
-    }
-    return 0; // Invalid or inactive account
-}
-
-// Function to read accounts from file
-Account *readAccountsFromFile(const char *filename, int *numAccounts)
-{
-    FILE *file = fopen("../database/account.txt", "r");
-    size_t len = 0;
-    if (file == NULL)
-    {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
-
-    // Count the number of accounts in the file
-    *numAccounts = 0;
-    char ch;
-    while ((ch = fgetc(file)) != EOF)
-    {
-        if (ch == '\n')
-        {
-            (*numAccounts)++;
-        }
-    }
-    rewind(file);
-
-    // Allocate memory for accounts
-    Account *accounts = malloc(*numAccounts * sizeof(Account));
-
-    // Read accounts from file
-    for (int i = 0; i < *numAccounts; i++)
-    {
-        char *line = NULL;
-        char fullname = NULL;
-        char username = NULL;
-        char password = NULL;
-        char ID = NULL;
-        int active;
-        // Đọc một dòng từ tệp
-        if (getline(&line, &len, file) != -1)
-        {
-            // Hiển thị dòng vừa đọc
-            printf("Read line: %s", line);
-
-            // Bạn có thể sử dụng 'line' ở đây cho mục đích khác
-        }
-        else
-        {
-            // Xử lý khi không đọc được dòng
-            perror("Error reading line");
-        }
-        fscanf(file, "%s\n%s\n%s\n%s\n%d", fullname, username, password, ID, &active);
-
-        accounts[i].fullname = strdup(fullname);
-        accounts[i].username = strdup(username);
-        accounts[i].password = strdup(password);
-        accounts[i].active = active;
-    }
-
-    fclose(file);
-    return accounts;
-}
+#define MAX_LINE_LENGTH 256
 
 void handleLogin(char *message, int socket_fd, const struct Session *sessionList)
 {
 
-    // Cấp phát bộ nhớ động cho các chuỗi con
-    char *command = NULL;
     char *username = NULL;
     char *password = NULL;
+    char line[MAX_LINE_LENGTH];
+    int status = 0; // Giả sử tất cả đều không đúng ban đầu
+    int find_username = 0;
+    char userId_find[MAX_LINE_LENGTH];
 
-    // Tách chuỗi bằng strtok
-    char *token = strtok(message, " ");
-    if (token != NULL)
+    // Tách username và password từ message
+    if (sscanf(message, "%m[^\n]\n%m[^\r]", &username, &password) != 2)
     {
-        command = malloc(strlen(token) + 1);
-        strcpy(command, token);
+        fprintf(stderr, "Error parsing message.\n");
+        return;
+    }
 
-        token = strtok(NULL, " ");
-        if (token != NULL)
+    // Mở file để đọc
+    FILE *file = fopen("../database/account.txt", "r");
+    if (file == NULL)
+    {
+        perror("Error opening file");
+        free(username);
+        free(password);
+        return;
+    }
+
+    // Đọc từng dòng từ file
+    while (fgets(line, sizeof(line), file) != NULL)
+    {
+        char fullname[MAX_LINE_LENGTH];
+        char fileUsername[MAX_LINE_LENGTH];
+        char filePassword[MAX_LINE_LENGTH];
+        char userId[MAX_LINE_LENGTH];
+        int fileStatus;
+
+        // Phân tích thông tin từ dòng
+        if (sscanf(line, "%s %s %s %s %d", fullname, fileUsername, filePassword, userId, &fileStatus) != 5)
         {
-            username = malloc(strlen(token) + 1);
-            strcpy(username, token);
-
-            token = strtok(NULL, " ");
-            if (token != NULL)
-            {
-                password = malloc(strlen(token) + 1);
-                strcpy(password, token);
-            }
+            fprintf(stderr, "Error parsing line: %s\n", line);
+            continue;
+        }
+        if (strcmp(username, fileUsername) == 0)
+        {
+            find_username = 1;
+        }
+        // Kiểm tra thông tin đăng nhập
+        if (strcmp(username, fileUsername) == 0 && strcmp(password, filePassword) == 0)
+        {
+            status = fileStatus;
+            strcpy(userId_find, userId);
+            break; // Tìm thấy thông tin đăng nhập, thoát khỏi vòng lặp
         }
     }
-    // Kiem tra tai tai khoan
 
-    // Giải phóng bộ nhớ đã cấp phát
-    free(command);
+    // Đóng file
+    fclose(file);
 
-    // Kiểm tra tài khoản từ file
-    int numAccounts;
-    Account *accounts = readAccountsFromFile("account.txt", &numAccounts);
-
-    // Kiểm tra tài khoản và mật khẩu
-    if (isValidAccount(username, password, accounts, numAccounts))
+    // Xử lý kết quả đăng nhập
+    if (status == 1)
     {
-        // Thanh cong
-        send(socket_fd, "203", sizeof("203"), 0);
-        // Tao session, mot tai khoan chi cho phep mot session
-        addSession(&sessionList, socket_fd, accounts[0].ID);
+        // Đăng nhập thành công
+        send(socket_fd, "2002", sizeof("2002"), 0);
+        addSession(sessionList, socket_fd, userId_find);
+    }
+    else if (find_username == 1)
+    {
+        send(socket_fd, "4202", sizeof("2002"), 0);
     }
     else
     {
-        // Khong thanh cong
-        send(socket_fd, "402", sizeof("402"), 0);
+        send(socket_fd, "4102", sizeof("2002"), 0);
     }
-    // Giải phóng bộ nhớ đã cấp phát
-    for (int i = 0; i < numAccounts; i++)
-    {
-        free(accounts[i].fullname);
-        free(accounts[i].username);
-        free(accounts[i].password);
-    }
-    free(accounts);
 
-    // Tra ve thong diep client
+    // Giải phóng bộ nhớ
+    free(username);
+    free(password);
 }

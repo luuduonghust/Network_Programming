@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../lib/session_manager.h"
-
+#include "../lib/sessionManager.h"
 
 // Hàm thêm một phiên mới vào danh sách
-void addSession(struct Session** sessionList, int socketId, const char* userId) {
-    struct Session* newSession = (struct Session*)malloc(sizeof(struct Session));
+void addSession(struct Session **sessionList, int socketId, const char *userId)
+{
+    struct Session *newSession = (struct Session *)malloc(sizeof(struct Session));
 
     // Gán giá trị cho các trường trong cấu trúc
     newSession->socketId = socketId;
 
     // Cấp phát động cho username và sao chép giá trị vào đó
-    newSession->username = strdup(userId);
+    newSession->userId = strdup(userId);
 
     newSession->next = *sessionList;
 
@@ -21,11 +21,14 @@ void addSession(struct Session** sessionList, int socketId, const char* userId) 
 }
 
 // Hàm kiểm tra xem một tài khoản có đang đăng nhập từ một client khác hay không
-int isUserIdLoggedIn(const struct Session* sessionList, const char* userId) {
-    const struct Session* currentSession = sessionList;
+int isUserIdLoggedIn(const struct Session *sessionList, const char *userId)
+{
+    const struct Session *currentSession = sessionList;
 
-    while (currentSession != NULL) {
-        if (strcmp(currentSession->userId, userId) == 0) {
+    while (currentSession != NULL)
+    {
+        if (strcmp(currentSession->userId, userId) == 0)
+        {
             // Tìm thấy tài khoản đang đăng nhập ở một client khác
             return 1;
         }
@@ -37,17 +40,23 @@ int isUserIdLoggedIn(const struct Session* sessionList, const char* userId) {
 }
 
 // Hàm xóa một phiên khỏi danh sách khi client đăng xuất
-void removeSessionBySocket(struct Session** sessionList, int socketId) {
-    struct Session* currentSession = *sessionList;
-    struct Session* prevSession = NULL;
+void removeSessionBySocket(struct Session **sessionList, int socketId)
+{
+    struct Session *currentSession = *sessionList;
+    struct Session *prevSession = NULL;
 
-    while (currentSession != NULL) {
-        if (currentSession->socketId == socketId) {
+    while (currentSession != NULL)
+    {
+        if (currentSession->socketId == socketId)
+        {
             // Tìm thấy phiên cần xóa
-            if (prevSession != NULL) {
+            if (prevSession != NULL)
+            {
                 // Phiên không phải là nút đầu danh sách
                 prevSession->next = currentSession->next;
-            } else {
+            }
+            else
+            {
                 // Phiên là nút đầu danh sách
                 *sessionList = currentSession->next;
             }
@@ -64,17 +73,23 @@ void removeSessionBySocket(struct Session** sessionList, int socketId) {
 }
 
 // Hàm xóa một phiên khỏi danh sách khi client đăng xuất
-void removeSessionByUserId(struct Session** sessionList, int userId) {
-    struct Session* currentSession = *sessionList;
-    struct Session* prevSession = NULL;
+void removeSessionByUserId(struct Session **sessionList, int userId)
+{
+    struct Session *currentSession = *sessionList;
+    struct Session *prevSession = NULL;
 
-    while (currentSession != NULL) {
-        if (currentSession->userId == userId) {
+    while (currentSession != NULL)
+    {
+        if (currentSession->userId == userId)
+        {
             // Tìm thấy phiên cần xóa
-            if (prevSession != NULL) {
+            if (prevSession != NULL)
+            {
                 // Phiên không phải là nút đầu danh sách
                 prevSession->next = currentSession->next;
-            } else {
+            }
+            else
+            {
                 // Phiên là nút đầu danh sách
                 *sessionList = currentSession->next;
             }
@@ -90,10 +105,13 @@ void removeSessionByUserId(struct Session** sessionList, int userId) {
     }
 }
 
-int findSocketIdByUserId(const struct Session* sessionList, const char* userId) {
-    const struct Session* current = sessionList;
-    while (current != NULL) {
-        if (strcmp(current->userId, userId) == 0) {
+int findSocketIdByUserId(const struct Session *sessionList, const char *userId)
+{
+    const struct Session *current = sessionList;
+    while (current != NULL)
+    {
+        if (strcmp(current->userId, userId) == 0)
+        {
             return current->socketId;
         }
         current = current->next;
