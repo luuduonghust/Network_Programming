@@ -87,10 +87,10 @@ int main(int argc, char *argv[])
         {
         case 1:
         {
-            // Xử lý đăng ký
+            // 1. Gửi lời mời kết bạn
             // ...
-            // break;
-            // Dăng ký xong vẫn phải yêu cầu đăng nhập hoặc đăng ký nên chỗ này không có break
+            break;
+            // Dăng ký xong vẫn phải yêu cầu đăng nhập hoặc đăng ký
         }
         case 2:
         {
@@ -110,7 +110,86 @@ int main(int argc, char *argv[])
         }
         }
 
-    } while (choice != 0);
+    } while ((choice != 0) && (login != 1));
+
+    // Khi người dùng đã đăng nhập
+    while (login == 1)
+    {
+        /* code */
+        displayMenu02();
+        scanf("%d", &choice);
+        // Đọc và loại bỏ ký tự mới dòng từ bộ đệm
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+            ;
+        switch (choice)
+        {
+        case 1:
+        {
+            // Xử lý đăng ký
+            // ...
+            break;
+        }
+        case 2:
+        {
+            // Thông báo lời mời kết bạn
+            // ...
+            break;
+        }
+        case 3:
+        {
+            // Xem danh sách bạn bè
+            // ...
+            break;
+        }
+        case 4:
+        {
+            // Chat giữa hai người
+            // ...
+            break;
+        }
+        case 5:
+        {
+            // Tạo nhóm chat
+            // ...
+            break;
+        }
+        case 6:
+        {
+            // Thêm người dùng khác vào nhóm chat
+            // ...
+            break;
+        }
+        case 7:
+        {
+            // Xóa người dùng khỏi nhóm chat
+            // ...
+            break;
+        }
+        case 8:
+        {
+            // Rời nhóm chat
+            // ...
+            break;
+        }
+        case 9:
+        {
+            // Chat trong nhóm
+            // ...
+            break;
+        }
+        // Thêm các trường hợp xử lý cho các chức năng khác tại đây
+        case 0:
+        {
+            printf("Thoát khỏi ứng dụng.\n");
+            break;
+        }
+        default:
+        {
+            printf("Lựa chọn không hợp lệ.\n");
+        }
+        }
+    }
 
     // Đóng kết nối
     close(clientSocket);

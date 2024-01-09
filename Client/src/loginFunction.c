@@ -57,7 +57,7 @@ int loginFunction(int clientSocket)
     printf("Server response: %s\n", response);
 
     // Kiểm tra phản hồi từ server và trả về kết quả
-    if (strcmp(response, "3006 Login success") == 0)
+    if (strcmp(response, "2002") == 0)
     {
         return 1; // Trả về 1 nếu đăng nhập thành công
     }
