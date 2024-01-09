@@ -9,7 +9,7 @@
 void processResponse(char *message, int socket_fd, const struct Session* sessionList){
     char userId1[256];
     char userId2[256];
-        if (sscanf(message, "%s/n%s/r/n",  userId1, userId2) == 2) {
+        if (sscanf(message, "%s\n%s\r\n",  userId1, userId2) == 2) {
           
             int socket_user1 = findSocketIdByUserId(sessionList, userId1);
             int socket_user2 = findSocketIdByUserId(sessionList, userId2);
@@ -20,11 +20,10 @@ void processResponse(char *message, int socket_fd, const struct Session* session
                 exit(1);
                 }
                     fprintf(file, "%s %s\n", userId1, userId2);
-                    fprintf(file, "%s %s\n", userId2, userId1);
                     fclose(file);
 
-                send(socket_user1, "312", sizeof("312"), 0);
-                send(socket_user2, "312", sizeof("312"), 0);
+                send(socket_user1, "2108", sizeof("2108"), 0);
+                send(socket_user2, "2108", sizeof("2108"), 0);
             
         
         }

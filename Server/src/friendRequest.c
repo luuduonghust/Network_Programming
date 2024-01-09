@@ -41,17 +41,17 @@ void requestToFriend(char *message, int socket_fd, const struct Session *session
                 
                 if (isFriend( senderId, receiverId) == 1 || isFriend( receiverId, senderId) == 1) {
                     // Nếu đã là bạn bè, gửi mã phản hồi "411" cho người gửi
-                    send(socket_fd, "411", sizeof("411"), 0);
+                    send(socket_fd, "4108", sizeof("4108"), 0);
                 }
                 if (socket_client == -1)
                 {
                     int socket_sender = findSocketIdByUserId(sessionList, senderId);
-                    send(socket_sender,"411", sizeof("411"), 0);
+                    send(socket_sender,"4008", sizeof("4008"), 0);
                 } else {
                    //Thông điệp gửi cho người nhận
                 char send_message[512];
                 //Tạo chuỗi với mã giao thức "311" và senderId
-                sprintf(send_message, "311/n%s", senderId);
+                sprintf(send_message, "2008/n%s", senderId);
                 // Gửi thông điệp tới người nhận
                 send(socket_client, send_message, sizeof(send_message), 0);
                 }
