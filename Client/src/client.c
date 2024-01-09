@@ -1,131 +1,102 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include "../lib/sendMessageToServer.h"
-#include "../lib/user.h"
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "../lib/function_chat.h"
 
-// Khai báo cấu trúc người dùng
-struct User {
-    char* fullname;
-    char* username;
-    char* password;
-};
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 12345
+#define BUFFER_SIZE 1024
 
-// Hàm đăng nhập
-int login(struct User *users, int numUsers, char *username, char *password) {
-    for (int i = 0; i < numUsers; ++i) {
-        if (strcmp(users[i].username, username) == 0 && strcmp(users[i].password, password) == 0) {
-            return 1; // Đăng nhập thành công
-        }
+void displayMenu01()
+{
+    printf("\n----- Menu -----\n");
+    printf("1. Đăng Ký\n");
+    printf("2. Đăng nhập\n");
+    printf("0. Thoát\n");
+    printf("Nhập lựa chọn của bạn: ");
+}
+
+void displayMenu02()
+{
+    printf("\n----- Menu -----\n");
+    printf("1. Gửi lời mời kết bạn\n");
+    printf("2. Thông báo lời mời kết bạn\n");
+    printf("3. Xem danh sách bạn bè\n");
+    printf("4. Chat giữa hai người\n");
+    printf("5. Tạo nhóm chat\n");
+    printf("6. Thêm người dùng khác vào nhóm chat\n");
+    printf("7. Xóa người dùng khỏi nhóm chat\n");
+    printf("8. Rời nhóm chat\n");
+    printf("9. Chat trong nhóm\n");
+    printf("0. Thoát\n");
+    printf("Nhập lựa chọn của bạn: ");
+}
+
+int main()
+{
+    int clientSocket;
+    struct sockaddr_in serverAddr;
+    char buffer[BUFFER_SIZE];
+
+    // Tạo socket
+    if ((clientSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        perror("Error creating socket");
+        exit(EXIT_FAILURE);
     }
-    return 0; // Đăng nhập thất bại
-}
 
-// Hàm đăng ký
-void registerUser(struct User *users, int *numUsers) {
-    printf("Nhap ho ten: ");
-    scanf("%s", users[*numUsers].fullname);
+    // Cấu hình địa chỉ server
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+    serverAddr.sin_port = htons(SERVER_PORT);
 
-    printf("Nhap tai khoan: ");
-    scanf("%s", users[*numUsers].username);
-
-    printf("Nhap mat khau: ");
-    scanf("%s", users[*numUsers].password);
-
-    (*numUsers)++;
-    printf("Dang ky thanh cong!\n");
-}
-
-// Hàm chính
-int main() {
-    struct User users[100]; // Giả sử có tối đa 100 người dùng
-    int numUsers = 0;
-    int client_socket;
+    // Kết nối đến server
+    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
+    {
+        perror("Error connecting to server");
+        exit(EXIT_FAILURE);
+    }
 
     int choice;
-    char username[50];
-    char password[50];
-
-    // client_socket = 
-
-    do {
-        printf("\nChon chuc nang:\n");
-        printf("1. Dang ky\n");
-        printf("2. Dang nhap\n");
-        printf("3. Thoat\n");
-
-        printf("Chon chuc nang: ");
+    do
+    {
+        displayMenu();
         scanf("%d", &choice);
 
-        switch (choice) {
-            case 1:
-                printf("Dang ky\n");
-                registerUser(users, &numUsers);
-                break;
-            case 2:
-                // Màn hình 1: Đăng nhập
-
-                printf("Nhap tai khoan: ");
-                scanf("%s", username);
-
-                printf("Nhap mat khau: ");
-                scanf("%s", password);
-
-                // Kiểm tra đăng nhập
-                if (login(users, numUsers, username, password)) {
-                    // Màn hình 2: Hiển thị menu chọn
-                    int choice2;
-                    do {
-                        printf("\nMàn hình 2:\n");
-                        printf("1. Tạo Nhóm Chat\n");
-                        printf("2. Chat với bạn\n");
-                        printf("3. Danh sách bạn bè\n");
-                        printf("4. Gửi lời mời kết bạn\n");
-                        printf("5. Thoát\n");
-
-                        printf("Chon chuc nang: ");
-                        scanf("%d", &choice2);
-
-                        switch (choice2) {
-                            case 1:
-                                printf("Tạo Nhóm Chat\n");
-                                // Thêm mã chức năng tạo nhóm chat
-                                break;
-                            case 2:
-                                printf("Chat với bạn\n");
-                                // Thêm mã chức năng chat với bạn
-                                break;
-                            case 3:
-                                printf("Danh sách bạn bè\n");
-                                // Thêm mã chức năng hiển thị danh sách bạn bè
-                                break;
-                            case 4:
-                                printf("Gửi lời mời kết bạn\n");
-                                // Thêm mã chức năng gửi lời mời kết bạn
-                                break;
-                            case 5:
-                                printf("Thoát\n");
-                                break;
-                            default:
-                                printf("Chuc nang khong hop le\n");
-                        }
-
-                    } while (choice2 != 5);
-                } else {
-                    printf("Dang nhap that bai\n");
-                }
-                break;
-            case 3:
-                printf("Thoat\n");
-                break;
-            default:
-                printf("Chuc nang khong hop le\n");
+        // Khi người dùng chưa đăng nhập
+        switch (choice)
+        {
+        case 1:
+        {
+            // Xử lý đăng ký
+            // ...
+            // break;
+            // Dăng ký xong vẫn phải yêu cầu đăng nhập hoặc đăng ký nên chỗ này không có break
+        }
+        case 2:
+        {
+            // Xử lý đăng nhập
+            // ...
+            break;
+        }
+        // Thêm các trường hợp xử lý cho các chức năng khác tại đây
+        case 0:
+        {
+            printf("Thoát khỏi ứng dụng.\n");
+            break;
+        }
+        default:
+        {
+            printf("Lựa chọn không hợp lệ.\n");
+        }
         }
 
-    } while (choice != 3);
+    } while (choice != 0);
+
+    // Đóng kết nối
+    close(clientSocket);
 
     return 0;
 }
