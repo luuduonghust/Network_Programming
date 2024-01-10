@@ -25,6 +25,7 @@ void *handleClient(void *arg)
     FILE *file = args->file;
     struct sockaddr_in client = args->client_sock_addr;
     struct Session **sessionList = args->sessionList;
+    int *gen_id = args->gen_id;
 
     int login = 0;
     char *partial_data = NULL;
@@ -94,6 +95,21 @@ void *handleClient(void *arg)
             }
             // send(conn_fd, buffer, sizeof(buffer), 0);
 
+            // Function register
+            if (strncmp(buffer_full, "register", 8) == 0){
+                char *remaining_data = strchr(buffer_full, '\n');
+                 if (remaining_data == NULL)
+                {
+                    // Chuỗi không bắt đầu bằng login\n...
+                }
+                else
+                {
+
+                    // Bỏ qua ký tự '\n'
+                    remaining_data++;
+                    handleRegistration(remaining_data ,gen_id, conn_fd);
+                }
+            }
             // Move the remaining data to the beginning of the buffer
             int remaining_length = partial_data_length - (crlf_position - partial_data) - 2;
             memmove(partial_data, crlf_position + 2, remaining_length);

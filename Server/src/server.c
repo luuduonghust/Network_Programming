@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int listen_fd, conn_fd;
+    int listen_fd, conn_fd, gen_id = 0;
     struct sockaddr_in server, client;
     socklen_t client_len;
 
@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
         }
 
         struct ThreadArgs *args = malloc(sizeof(struct ThreadArgs));
+        args->gen_id = &gen_id;
         args->conn_fd = conn_fd;
         args->file = file;
         args->client_sock_addr = client;

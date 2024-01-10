@@ -8,6 +8,7 @@
 // Structure to hold thread arguments
 struct ThreadArgs
 {
+    int *gen_id;
     int conn_fd;                         // Socket identifier for the client connection
     FILE *file;                          // File to be passed to the function for processing
     struct sockaddr_in client_sock_addr; // Add client variable to the structure

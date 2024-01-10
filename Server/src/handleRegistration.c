@@ -16,7 +16,9 @@ int save(char* fullname, char* username, char* passsword, int *gen_id);
 int check(struct UserInfo user);
 // Lưu giá trị gen_id vào tệp
 void saveGenId(int gen_id);
+int readGenId();
 // Xử lý đăng ký người dùng
+char *genId(int gen_code);
 void handleRegistration(char *message, int *gen_id, int socket_fd){
     // Khai báo biến. Khi server đọc message đầu tiên thì sẽ truyền vào các module tương ứng
     char* fullname;
@@ -58,9 +60,11 @@ int save(char *fullname, char *username, char *password, int *gen_id){
         return -1; 
     }
     // Tăng id lên 1 đơn vị với 1 tài khoản đăng ký thành công
+    char genID[10];
+    strcpy(genID, genId(*gen_id));
     (*gen_id)++;
      // Ghi thông tin người dùng vào file
-    fprintf(dbFile, "%s %s %s %d  1\n", fullname, username, password, *gen_id);
+    fprintf(dbFile, "%s %s %s %s  1\n", fullname, username, password, genID);
      // Lưu giá trị gen_id vào tệp
     saveGenId(*gen_id);
     fclose(dbFile);
