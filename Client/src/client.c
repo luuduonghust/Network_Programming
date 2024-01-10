@@ -23,14 +23,16 @@ void displayMenu02()
 {
     printf("\n----- Menu -----\n");
     printf("1. Gửi lời mời kết bạn\n");
-    printf("2. Thông báo lời mời kết bạn\n");
-    printf("3. Xem danh sách bạn bè\n");
-    printf("4. Chat giữa hai người\n");
-    printf("5. Tạo nhóm chat\n");
-    printf("6. Thêm người dùng khác vào nhóm chat\n");
-    printf("7. Xóa người dùng khỏi nhóm chat\n");
-    printf("8. Rời nhóm chat\n");
-    printf("9. Chat trong nhóm\n");
+    printf("3. Huỷ kết bạn\n");
+    printf("4. Thông báo lời mời kết bạn\n");
+    printf("5. Xem danh sách bạn bè\n");
+    printf("6. Chat giữa hai người\n");
+    printf("7. Ngắt kết nối\n");
+    printf("8. Tạo nhóm chat\n");
+    printf("9. Thêm người dùng khác vào nhóm chat\n");
+    printf("10. Xóa người dùng khỏi nhóm chat\n");
+    printf("11. Rời nhóm chat\n");
+    printf("12. Chat trong nhóm\n");
     printf("0. Thoát\n");
     printf("Nhập lựa chọn của bạn: ");
 }
@@ -128,8 +130,7 @@ int main(int argc, char *argv[])
         {
         case 1:
         {
-            // Xử lý đăng ký
-            // ...
+            sendFriendRequestFunction(clientSocket);
             break;
         }
         case 2:
