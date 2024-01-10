@@ -8,7 +8,7 @@ void deleteMemberOfGroup(int clientSocket);
 void friendRequestNotificationFunction(int clientSocket);
 void leaveGroup(int clientSocket);
 int loginFunction(int clientSocket);
-void registrationFunction(int clientSocket);
+int registrationFunction(int clientSocket);
 void sendFriendRequestFunction(int clientSocket);
 void viewFriendsListFunction(int clientSocket);
 #endif

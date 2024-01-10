@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include "../lib/function_chat.h"
 
 #define SERVER_IP "127.0.0.1"
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
         printf("Connect server!\n");
     }
     int login = 0;
+    int registration = 0;
     int choice;
     do
     {
@@ -87,8 +90,7 @@ int main(int argc, char *argv[])
         {
         case 1:
         {
-            // 1. Gửi lời mời kết bạn
-            // ...
+            registration = registrationFunction(clientSocket);
             break;
             // Dăng ký xong vẫn phải yêu cầu đăng nhập hoặc đăng ký
         }

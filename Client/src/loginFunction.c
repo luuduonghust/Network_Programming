@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #define MAX_USERNAME_LENGTH 60
 #define MAX_PASSWORD_LENGTH 60
